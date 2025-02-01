@@ -10,7 +10,7 @@ def load_data(file_path):
         data = json.load(file)
 
     # Extract texts from the dataset
-    return [item['cleaned_main_text'] for item in data]
+    return [item['processed_text'] for item in data]
 
 
 # Generate text embeddings
@@ -37,7 +37,7 @@ def find_similar_texts(query, model, index, texts, k=5):
 # Main execution
 if __name__ == "__main__":
     # Load dataset
-    texts = load_data("Data/processed/processed_results.json")
+    texts = load_data("Data/processed/processed_results_fixed.json")
 
     # Generate embeddings
     embeddings, model = generate_embeddings(texts)
@@ -45,14 +45,15 @@ if __name__ == "__main__":
     # Create vector index
     index = create_faiss_index(embeddings)
 
-    # Interactive search
-    while True:
-        query = input("Enter a query (type 'exit' to quit): ")
-        if query.lower() == "exit":
-            break
+    faiss.write_index(index, "Data/processed/vector_index.faiss")
+    print("FAISS index saved as 'vector_index.faiss'")
 
-        results = find_similar_texts(query, model, index, texts, k=3)
+    np.save("Data/processed/embeddings.npy", embeddings)
 
-        # Display results
-        for rank, (text, distance) in enumerate(results, start=1):
-            print(f"{rank}. {text[:200]}... (Distance: {distance:.4f})")
+    with open("texts.json", "w", encoding="utf-8") as file:
+        json.dump(texts, file, ensure_ascii=False, indent=4)
+
+    print("Embeddings and texts saved.")
+
+    model.save("Data/processed/sentence_transformer_model")
+    print("Model saved as 'sentence_transformer_model'.")
