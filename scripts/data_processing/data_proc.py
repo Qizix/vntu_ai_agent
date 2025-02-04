@@ -1,14 +1,17 @@
 import pandas as pd
 import re
 from nltk.tokenize import word_tokenize
-import pymorphy2
+
 import nltk
+import stanza
+
 nltk.download('stopwords')
 # Інсталюємо залежності перед запуском:
 # pip install pandas nltk pymorphy2 pymorphy2-dicts-uk
 
 # Ініціалізація аналізатора для української мови
-morph = pymorphy2.MorphAnalyzer(lang='uk')
+stanza.download('uk')  # Завантаження моделі
+nlp = stanza.Pipeline('uk', processors='tokenize,morph', use_gpu=False)
 
 # Завантажуємо стоп-слова з власного файлу
 with open("Data/stopwords_ua.txt", "r", encoding="utf-8") as file:
@@ -39,7 +42,10 @@ def preprocess_text(text):
     words = [word for word in words if word not in stop_words]
 
     # Лематизація
-    lemmatized_words = [morph.parse(word)[0].normal_form for word in words]
+    lemmatized_words = []
+    doc = nlp(" ".join(words))
+    for sentence in doc.sentences:
+        lemmatized_words.extend([word.lemma for word in sentence.words])
 
     return " ".join(lemmatized_words)
 
@@ -63,7 +69,7 @@ def clean_dataframe(df):
 # Приклад завантаження та обробки JSON
 if __name__ == "__main__":
     # Завантаження "брудних" даних
-    df = pd.read_json('Data/raw/results.json')  # Змінити на ваш шлях до даних
+    df = pd.read_json('Data/raw/wiki_results.json')  # Змінити на ваш шлях до даних
 
     # Виконаємо очищення та обробку
     processed_df = clean_dataframe(df)
