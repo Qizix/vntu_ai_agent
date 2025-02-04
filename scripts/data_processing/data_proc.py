@@ -1,80 +1,77 @@
-import pandas as pd
+import json
 import re
-from nltk.tokenize import word_tokenize
-
-import nltk
+import pandas as pd
 import stanza
+import pymorphy2
 
-nltk.download('stopwords')
-# Інсталюємо залежності перед запуском:
-# pip install pandas nltk pymorphy2 pymorphy2-dicts-uk
 
-# Ініціалізація аналізатора для української мови
-stanza.download('uk')  # Завантаження моделі
-nlp = stanza.Pipeline('uk', processors='tokenize,morph', use_gpu=False)
+# Завантаження стоп-слів
+def load_stopwords(filepath):
+    with open(filepath, 'r', encoding='utf-8') as file:
+        return set(word.strip() for word in file.readlines())
 
-# Завантажуємо стоп-слова з власного файлу
-with open("Data/stopwords_ua.txt", "r", encoding="utf-8") as file:
-    stop_words = set(file.read().splitlines())
 
-# Тепер stop_words містить ваш список українських стоп-слів
-print(f"Кількість стоп-слів: {len(stop_words)}")
-
-# Функція для обробки тексту
-def preprocess_text(text):
-    """
-    Обробляє текст:
-    - Приводить у нижній регістр
-    - Видаляє зайві символи
-    - Видаляє стоп-слова
-    - Виконує лематизацію для кожного слова
-    """
-    # Приводимо до нижнього регістру
+# Очищення тексту
+def clean_text(text):
     text = text.lower()
+    text = re.sub(r'[^а-яєґіїї\s]', '', text)  # Залишаємо тільки літери та пробіли
+    return text
 
-    # Видаляємо всі небажані символи (залишаємо літери і пробіли)
-    text = re.sub(r'[^а-яґєёіїґА-Яa-zA-Z\s]', '', text, flags=re.UNICODE)
 
-    # Токенізація (перетворення тексту в список слів)
-    words = word_tokenize(text)
+# Токенізація
+def tokenize_text(text, nlp):
+    doc = nlp(text)
+    return [word.text for sentence in doc.sentences for word in sentence.words]
 
-    # Видалення стоп-слів
-    words = [word for word in words if word not in stop_words]
 
-    # Лематизація
-    lemmatized_words = []
-    doc = nlp(" ".join(words))
-    for sentence in doc.sentences:
-        lemmatized_words.extend([word.lemma for word in sentence.words])
+# Видалення стоп-слів
+def remove_stopwords(tokens, stopwords):
+    return [token for token in tokens if token not in stopwords]
 
-    return " ".join(lemmatized_words)
+
+# Лематизація
+def lemmatize_tokens(tokens, morph):
+    return [morph.parse(token)[0].normal_form for token in tokens]
+
+
+# Повна обробка тексту
+def process_text(text, nlp, morph, stopwords):
+    cleaned_text = clean_text(text)
+    tokens = tokenize_text(cleaned_text, nlp)
+    tokens = remove_stopwords(tokens, stopwords)
+    lemmatized_text = lemmatize_tokens(tokens, morph)
+    return ' '.join(lemmatized_text)
 
 
 # Обробка DataFrame
-def clean_dataframe(df):
-    """
-    Видаляє пусті текстові поля та обробляє колонки із текстом.
-    """
-    # Видалення рядків із пустим або невизначеним cleaned_main_text
-    df = df[df['cleaned_main_text'].notnull()]  # Видаляємо None
-    df = df[df['cleaned_main_text'].str.strip() != ""]  # Видаляємо порожній текст
-
-    # Обробка тексту
-    df['processed_text'] = df['cleaned_main_text'].apply(preprocess_text)
-    df.drop(columns=['cleaned_main_text'], inplace=True)
-
-    return df
+def process_dataframe(df, nlp, morph, stopwords):
+    df['processed_text'] = df['cleaned_main_text'].apply(
+        lambda text: process_text(text, nlp, morph, stopwords) if pd.notna(text) else '')
+    df = df[df['processed_text'].str.strip() != '']
+    return df[['processed_text']]
 
 
-# Приклад завантаження та обробки JSON
+# Завантаження JSON, обробка та збереження результату
+def process_json(input_file, output_file, stopwords_file):
+    with open(input_file, 'r', encoding='utf-8') as file:
+        data = json.load(file)
+
+    df = pd.DataFrame(data)
+    stopwords = load_stopwords(stopwords_file)
+    nlp = stanza.Pipeline('uk', processors='tokenize')
+    morph = pymorphy2.MorphAnalyzer(lang='uk')
+
+    processed_df = process_dataframe(df, nlp, morph, stopwords)
+
+    processed_df.to_json(output_file, orient='records', force_ascii=False, indent=4)
+    print("Обробка завершена. Результат збережено у файл", output_file)
+
 if __name__ == "__main__":
-    # Завантаження "брудних" даних
-    df = pd.read_json('Data/raw/wiki_results.json')  # Змінити на ваш шлях до даних
+    # Завантаження даних
+    input_json = 'Data/raw/wiki_results.json'
+    output_json = 'Data/processed/wiki_processed_results.json'
+    stopwords_file = 'Data/stopwords_ua.txt'
 
-    # Виконаємо очищення та обробку
-    processed_df = clean_dataframe(df)
+    process_json(input_json, output_json, stopwords_file)
 
-    # Збереження оброблених даних у файл
-    processed_df.to_json('Data/processed/processed_results.json', orient='records', lines=True, force_ascii=False)
-
-    print(processed_df.head())
+    print("Обробка завершена. Результат збережено!")
