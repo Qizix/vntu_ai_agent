@@ -113,12 +113,9 @@ async def handle_user_input(user_input):
 # Рендеринг чату
 def render_chat():
     for message in st.session_state.messages:
-        if message["role"] == "user":
-            st.markdown(f"<div style='text-align: right; background: #0078d7; color: white; padding: 10px; "
-                        f"border-radius: 5px; margin: 10px 5px;'>{message['content']}</div>", unsafe_allow_html=True)
-        else:
-            st.markdown(f"<div style='background: #f1f1f1; padding: 10px; border-radius: 5px; "
-                        f"margin: 10px 5px;'>{message['content']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='text-align: right; background: #0078d7; color: white; padding: 10px; "
+                    f"border-radius: 5px; margin: 10px 5px;'>{message['content']}</div>", unsafe_allow_html=True)
+
 
 
 # Виведення чату
