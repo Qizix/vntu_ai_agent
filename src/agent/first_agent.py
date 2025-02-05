@@ -5,6 +5,9 @@ from sentence_transformers import SentenceTransformer
 from fastapi import FastAPI
 from pydantic import BaseModel
 import requests  # Для запитів до Ollama API
+from fastapi.responses import StreamingResponse
+from typing import Callable
+import asyncio
 
 # Ініціалізація FastAPI
 app = FastAPI()
@@ -90,45 +93,54 @@ class QueryRequest(BaseModel):
     query: str
     num_results: int = 5  # Кількість результатів FAISS
 
+async def generate_response_stream(model_name: str, prompt: str):
+    # Структура запиту до Ollama
+    data = {"model": model_name, "prompt": prompt}
 
+    # Відправляємо запит зі стрімінгом
+    with requests.post(OLLAMA_API_URL, json=data, stream=True) as response:
+        if response.status_code == 200:
+            # Читаємо окремі частини відповіді
+            for chunk in response.iter_lines(decode_unicode=True):
+                if chunk:
+                    try:
+                        chunk_data = json.loads(chunk)
+                        if "response" in chunk_data:
+                            # Повертаємо наступну частину відповіді
+                            yield f"{chunk_data['response']}"
+                    except json.JSONDecodeError:
+                        # Ігноруємо некоректний JSON
+                        continue
+        else:
+            # Якщо сталася помилка, завершуємо стрімінг та повертаємо повідомлення
+            yield f"Error: {response.status_code} {response.text}"
 @app.post("/agent")
-def agent_endpoint(request: QueryRequest):
+async def agent_endpoint_stream(request: QueryRequest):
     try:
         # Крок 1: Пошук схожих текстів у FAISS
         similar_texts = find_similar_texts(request.query, request.num_results)
 
-        # Якщо не знайдено жодного тексту
         if not similar_texts:
-            return {
-                "query": request.query,
-                "response": "Немає релевантного контексту до вашого запиту. Спробуйте уточнити або змінити запит.",
-                "context": []
-            }
+            # Якщо немає релевантного контексту
+            return StreamingResponse(iter([{
+                "response": "Немає релевантного контексту до вашого запиту. Спробуйте уточнити або змінити запит."
+            }]), media_type="application/json")
 
-        # Крок 2: Формуємо контекст
+        # Формуємо контекст
         context = "\n\n".join([
-            f"Context {i + 1}: {result['text']['processed_text'][:500]}"
-            # Обрізаємо, щоб уникнути надлишкового контексту
+            f"Context {i + 1}: {result['text']['processed_text'][:500]}"  # Обрізання для уникнення надлишку тексту
             for i, result in enumerate(similar_texts)
         ])
 
-        # Крок 3: Формування промпту для Ollama
+        # Формуємо промпт для Ollama
         prompt = f"Використовуй контекст щоб відповісти на запит:\n\n{context}\n\nЗапит: {request.query}\nВідповідь:"
 
-        # Крок 4: Виклик Ollama API
-        response = query_ollama("phi4", prompt)
+        # Генеруємо стрімінг відповіді Ollama
+        response_stream: Callable = generate_response_stream("phi4", prompt)
 
-        # Формуємо фінальний результат
-        return {
-            "query": request.query,
-            "response": response.strip(),  # Прибираємо зайві пробіли
-            "context": similar_texts
-        }
+        # Повертаємо стрімінгову відповідь
+        return StreamingResponse(response_stream, media_type="text/plain")
 
-    except Exception as e:  # Усі інші помилки
-        return {
-            "error": True,
-            "message": str(e),
-            "query": request.query,
-            "response": "Сталася помилка під час обробки вашого запиту. Повідомте адміністратора."
-        }
+    except Exception as e:
+        # Відправляємо повідомлення про помилку у стрімінговому вигляді
+        return StreamingResponse(iter([f"Error: {str(e)}"]), media_type="text/plain")
