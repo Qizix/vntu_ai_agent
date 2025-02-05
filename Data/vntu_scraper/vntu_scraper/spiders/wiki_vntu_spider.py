@@ -12,14 +12,18 @@ class VntuSpider(scrapy.Spider):
     counter = 0
 
     def parse(self, response):
-
         self.counter += 1
         self.logger.info(f"[{self.counter}] Обробляється сторінка: {response.url}")
 
-        # Вибір тексту тільки з div.content
-        raw_text, main_links_inside_div = self.extract_clean_text(response)
+        # Витяг тексту з використанням загальних селекторів
+        raw_text = self.extract_clean_text(response)
 
-        # Отримання всіх посилань сторінки (включаючи поза div.content)
+        # Аналіз сторінки на корисність
+        if self.is_page_not_useful(raw_text, response):
+            self.logger.warning(f"Сторінка '{response.url}' мала некорисний контент. Пропущено.")
+            return  # Пропускаємо некорисні сторінки
+
+        # Отримання всіх посилань сторінки
         all_links = response.css("a::attr(href)").getall()
         all_links = self.filter_links(response, all_links)
 
@@ -28,7 +32,7 @@ class VntuSpider(scrapy.Spider):
         # Збереження результатів
         yield {
             "url": response.url,
-            "cleaned_main_text": raw_text,  # Текст тільки з div.content
+            "cleaned_main_text": raw_text,  # Основний текст сторінки
         }
 
         # Перехід до інших сторінок
@@ -61,12 +65,59 @@ class VntuSpider(scrapy.Spider):
         text = re.sub(r"\b(подробиці|читати далі)\b", "", text, flags=re.I)  # Видалення зайвих фраз
         return text.strip()
 
+    def is_page_not_useful(self, text, response):
+        """
+            Аналіз сторінки, щоб виявити некорисний контент.
+            """
+        # 1. Якщо сторінка не містить тексту:
+        if not text or len(text.strip()) == 0:
+            self.logger.info(f"Сторінка '{response.url}' містить порожній текст.")
+            return True
+
+        # 2. Якщо текст занадто короткий:
+        if len(text) < 100:  # Мінімальна кількість символів для визнання сторінки корисною
+            self.logger.info(f"Сторінка '{response.url}' має дуже короткий текст ({len(text)} символів).")
+            return True
+
+        # 3. Якщо в тексті містяться загальні службові терміни:
+        useless_keywords = [
+            "404", "сторінка не знайдена", "завантаження", "доступ заборонено",  # Помилки
+            "авторські права", "політика конфіденційності", "публічна оферта",  # Службові
+            "архів", "старий контент", "звіт", "переглянути статистику",  # Архіви та звіти
+            "всі права захищені", "університет залишає за собою право"  # Типові службові тексти
+        ]
+        if any(keyword.lower() in text.lower() for keyword in useless_keywords):
+            self.logger.info(f"Сторінка '{response.url}' містить службову або некорисну інформацію.")
+            return True
+
+        # 4. Додаткові виключення за URL:
+        exclude_terms_in_url = [
+            "login", "signin", "register", "search",  # Форми входу чи реєстрації
+            "policy", "copyright", "terms", "archive",  # Політики, авторські права, архіви
+            "admin", "user", "feedback", "contact", "privacy"  # Адмін, контакти, інше
+        ]
+        if any(term in response.url.lower() for term in exclude_terms_in_url):
+            self.logger.info(f"Сторінка '{response.url}' є службовою (за URL).")
+            return True
+
+        # Якщо всі умови не виконані - сторінка корисна
+        return False
+
     def filter_links(self, response, links):
         """
         Фільтрація посилань, залишаючи лише ті, що належать wiki.vntu.edu.ua,
-        та виключення зображень або інших типів файлів.
+        та виключення зображень або інших типів файлів, а також сторінок із "Спеціальна:".
         """
         # Абсолютні посилання
         links = [response.urljoin(link) for link in links]
+
         # Фільтруємо посилання
-        return [link for link in links if ("wiki.vntu.edu.ua" in link and not link.endswith((".jpg", ".png", ".pdf", ".JPG", ".gif")))]
+        filtered_links = [
+            link for link in links
+            if ("wiki.vntu.edu.ua" in link and
+                not link.endswith((".jpg", ".png", ".pdf", ".JPG", ".gif")) and
+                "Спеціальна:" not in link and
+                "%D0%A1%D0%BF%D0%B5%D1%86%D1%96%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0:" not in link)
+        ]
+
+        return filtered_links
