@@ -1,0 +1,95 @@
+import scrapy
+from urllib.parse import urljoin
+from w3lib.html import remove_tags
+import re
+
+
+class VntuSpider(scrapy.Spider):
+    name = "vntu_spider"
+    allowed_domains = ["vntu.edu.ua"]
+    start_urls = ["https://vntu.edu.ua/uk/about-university/vntu-today.html"]
+    visited_links = set()
+    counter = 0
+
+    # Список селекторів для пошуку основного тексту
+    TEXT_SELECTORS = [
+        "div#content",  # Основний контент
+        "div.content",  # Популярний клас
+        "article",  # Тег для статей
+        "section",  # Загальні секції
+        "main",  # Основна частина сторінки
+    ]
+
+    def parse(self, response):
+
+        self.counter += 1
+        self.logger.info(f"[{self.counter}] Обробляється сторінка: {response.url}")
+
+        # Вибір тексту з використанням загальних селекторів
+        raw_text = self.extract_clean_text(response)
+
+        # Отримання всіх посилань сторінки
+        all_links = response.css("a::attr(href)").getall()
+        all_links = self.filter_links(response, all_links)
+
+        self.logger.debug(f"На сторінці знайдено загалом {len(all_links)} посилань.")
+
+        # Збереження результатів
+        yield {
+            "url": response.url,
+            "cleaned_main_text": raw_text,  # Основний текст сторінки
+        }
+
+        # Перехід до інших сторінок
+        for link in all_links:
+            if link not in self.visited_links:
+                self.visited_links.add(link)
+                self.logger.info(f"Перехід на сторінку: {link}")
+                yield scrapy.Request(url=link, callback=self.parse)
+
+    def extract_clean_text(self, response, custom_selectors=None):
+        """
+        Витягання тексту з використанням кількох селекторів.
+        Можна передати кастомний список селекторів через 'custom_selectors'.
+        """
+        selectors = custom_selectors or self.TEXT_SELECTORS  # Використовується переданий або стандартний список селекторів
+        for sel in selectors:
+            elements = response.css(f"{sel} *::text").getall()
+            if elements:
+                text = self.clean_text(" ".join(elements))
+                if text:  # Повертаємо перший нерозривний результат
+                    self.logger.info(f"Текст знайдено за селектором: {sel}")
+                    return text
+
+        self.logger.warning(f"Не вдалося знайти текст за жодним із селекторів на сторінці: {response.url}")
+        return ""
+
+    def clean_text(self, text):
+        """
+        Очищення тексту: видалення HTML-тегів, зайвих пробілів, скриптів тощо.
+        """
+        text = remove_tags(text)
+        text = re.sub(r"\s+", " ", text)  # Усунення повторів пробілів
+        text = re.sub(r"\|", " ", text)  # Видалення зайвих вертикальних рисок
+        text = re.sub(r"\b(подробиці|читати далі|деталі)\b", "", text, flags=re.I)  # Видалення зайвих фраз
+        return text.strip()
+
+    def filter_links(self, response, links):
+        """
+        Фільтрація посилань, залишаючи лише ті, що належать домену vntu.edu.ua,
+        та виключення зображень або інших типів файлів, а також сторінок із "Спеціальна:".
+        """
+        # Абсолютні посилання
+        links = [response.urljoin(link) for link in links]
+
+        # Фільтрація посилань
+        filtered_links = [
+            link for link in links
+            if ("vntu.edu.ua" in link and
+                not link.endswith((".jpg", ".png", ".pdf", ".JPG", ".gif")) and
+                "Спеціальна:" not in link and
+                "%D0%A1%D0%BF%D0%B5%D1%86%D1%96%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0:" not in link and
+                "ir.lib" not in link)
+        ]
+
+        return filtered_links
