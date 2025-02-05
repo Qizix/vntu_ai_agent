@@ -4,7 +4,7 @@ import requests
 # URL вашого агента
 AGENT_API_URL = "http://127.0.0.1:8000/agent"
 
-# Назва заголовка сторінки
+# Назва сторінки
 st.title("🤖 AI Chat Interface")
 
 # Додаткові стилі
@@ -32,7 +32,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 
-# Функція для відображення чату
+# Функція для рендерингу чату
 def render_chat():
     for message in st.session_state.messages:
         if message["role"] == "user":
@@ -41,36 +41,36 @@ def render_chat():
             st.markdown(f"<div class='message'>{message['content']}</div>", unsafe_allow_html=True)
 
 
-# Рендер історії чату
+# Рендер чату
 render_chat()
 
-# Поле для вводу від користувача
-placeholder = st.empty()  # Використовуємо порожній контейнер для динамічного поля вводу
-user_input = placeholder.text_input("Введіть своє повідомлення:")
+# Поле для вводу користувача
+user_input = st.text_input("Введіть своє повідомлення:")
 
-# Якщо є текст від користувача
+# Якщо є вхід від користувача
 if user_input:
-    # Додаємо повідомлення користувача
+    # Додавання повідомлення користувача до сесії
     st.session_state.messages.append({"role": "user", "content": user_input})
-    placeholder.empty()  # Очищаємо поле вводу
+    # Порожній контейнер для стрімінгової відповіді
+    placeholder = st.empty()
 
-    # Відправляємо запит до агента
+    # Надсилаємо запит до агента
     try:
-        response = requests.post(AGENT_API_URL, json={"query": user_input, "num_results": 5})
-        if response.status_code == 200:
-            data = response.json()
-            # Перевіряємо чи агент повернув помилку або відповідь
-            if "error" in data and data["error"]:
-                agent_response = f"Помилка агента: {data['message']}"
+        with requests.post(AGENT_API_URL, json={"query": user_input, "num_results": 5}, stream=True) as response:
+            if response.status_code == 200:
+                agent_response = ""
+                for chunk in response.iter_lines(decode_unicode=True):
+                    if chunk:
+                        # Декодуємо та додаємо наступну частину
+                        agent_response += chunk
+                        placeholder.markdown(f"<div class='message'>{agent_response}</div>", unsafe_allow_html=True)
             else:
-                agent_response = data.get("response", "Немає відповіді від агента.")
-        else:
-            agent_response = f"Помилка: {response.status_code} {response.text}"
+                st.error(f"Помилка агента: {response.status_code} {response.text}")
     except Exception as e:
-        agent_response = f"Помилка під час звернення до API: {e}"
+        st.error(f"Помилка зв'язку з агентом: {e}")
 
-    # Додаємо відповідь агента
+    # Додаємо фінальну відповідь до чату
     st.session_state.messages.append({"role": "agent", "content": agent_response})
 
-    # Перерендер чату — функція викликається автоматично
+    # Оновлюємо чат
     render_chat()
