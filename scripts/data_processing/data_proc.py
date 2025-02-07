@@ -68,8 +68,8 @@ def process_json(input_file, output_file, stopwords_file):
 
 if __name__ == "__main__":
     # Завантаження даних
-    input_json = 'Data/raw/wiki_results.json'
-    output_json = 'Data/processed/wiki_processed_results.json'
+    input_json = 'Data/raw/big_results.json'
+    output_json = 'Data/processed/big_processed_results.json'
     stopwords_file = 'Data/stopwords_ua.txt'
 
     process_json(input_json, output_json, stopwords_file)
