@@ -10,8 +10,8 @@ import faiss
 
 # *** Налаштування ***
 OLLAMA_API_URL = "http://127.0.0.1:11434/api/generate"  # Ендпоінт Ollama
-FAISS_INDEX_PATH = "Data/processed/wiki/vector_index.faiss"
-MODEL_PATH = "Data/processed/wiki/sentence_transformer_model"
+FAISS_INDEX_PATH = "Data/processed/big/vector_index.faiss"
+MODEL_PATH = "Data/processed/big/sentence_transformer_model"
 
 os.environ["STREAMLIT_WATCH_FILE"] = "false"
 
@@ -22,7 +22,7 @@ def load_resources():
     print("Loading model and index...")
     model = SentenceTransformer(MODEL_PATH)
     index = faiss.read_index(FAISS_INDEX_PATH)
-    with open("Data/processed/wiki_processed_results.json", "r", encoding="utf-8") as f:
+    with open("Data/processed/big_processed_results.json", "r", encoding="utf-8") as f:
         texts = json.load(f)
     return model, index, texts
 
@@ -79,7 +79,7 @@ async def handle_user_input(user_input):
         return
 
     # Формуємо обмежений контекст для Ollama
-    MAX_LENGTH = 1500  # Максимальна кількість символів для контексту
+    MAX_LENGTH = 5000  # Максимальна кількість символів для контексту
     context = "\n\n".join(
         [
             f"Context {i + 1}: {result['text']['processed_text'][:500]}"
@@ -100,7 +100,7 @@ async def handle_user_input(user_input):
     agent_response = []
 
     # Збір часткової відповіді
-    MAX_AGENT_RESPONSE_LENGTH = 500  # Максимальна довжина відповіді у символах
+    MAX_AGENT_RESPONSE_LENGTH = 5000  # Максимальна довжина відповіді у символах
     async for partial_response in call_ollama(friendly_prompt):
         if len("".join(agent_response)) < MAX_AGENT_RESPONSE_LENGTH:
             agent_response.append(partial_response)
