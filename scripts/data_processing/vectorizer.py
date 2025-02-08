@@ -91,8 +91,8 @@ def evaluate_vectorizer(query, model, index, texts, k=5):
 # Main execution
 if __name__ == "__main__":
     # Paths and settings
-    data_path = "Data/processed/wiki_processed_results.json"
-    output_dir = "Data/processed/wiki"
+    data_path = "Data/processed/big_processed_results.json"
+    output_dir = "Data/processed/big"
 
     # Load dataset
     print("Loading dataset...")
@@ -113,5 +113,5 @@ if __name__ == "__main__":
     embeddings, texts, index, model = load_vector_data(output_dir=output_dir)
 
     # Test the vectorizer
-    test_query = "Що таке JetIQ?"
+    test_query = "Що ти знаєш про фііту?"
     evaluate_vectorizer(test_query, model, index, texts, k=5)
