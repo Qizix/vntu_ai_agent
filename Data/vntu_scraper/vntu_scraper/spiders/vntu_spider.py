@@ -86,7 +86,7 @@ class VntuSpider(scrapy.Spider):
         filtered_links = [
             link for link in links
             if ("vntu.edu.ua" in link and
-                not link.endswith((".jpg", ".png", ".pdf", ".JPG", ".gif")) and
+                not link.endswith((".jpg", ".pdf", ".JPG", ".gif")) and
                 "Спеціальна:" not in link and
                 "%D0%A1%D0%BF%D0%B5%D1%86%D1%96%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0:" not in link and
                 "ir.lib" not in link and
