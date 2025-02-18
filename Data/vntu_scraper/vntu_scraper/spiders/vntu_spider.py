@@ -48,10 +48,7 @@ class VntuSpider(scrapy.Spider):
                 yield scrapy.Request(url=link, callback=self.parse)
 
     def extract_clean_text(self, response, custom_selectors=None):
-        """
-        Витягання тексту з використанням кількох селекторів.
-        Можна передати кастомний список селекторів через 'custom_selectors'.
-        """
+
         selectors = custom_selectors or self.TEXT_SELECTORS  # Використовується переданий або стандартний список селекторів
         for sel in selectors:
             elements = response.css(f"{sel} *::text").getall()
