@@ -72,10 +72,7 @@ class VntuSpider(scrapy.Spider):
         return text.strip()
 
     def filter_links(self, response, links):
-        """
-        Фільтрація посилань, залишаючи лише ті, що належать домену vntu.edu.ua,
-        та виключення зображень або інших типів файлів, а також сторінок із "Спеціальна:".
-        """
+
         # Абсолютні посилання
         links = [response.urljoin(link) for link in links]
 
