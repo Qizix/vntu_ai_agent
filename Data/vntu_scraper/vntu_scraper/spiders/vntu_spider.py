@@ -62,9 +62,6 @@ class VntuSpider(scrapy.Spider):
         return ""
 
     def clean_text(self, text):
-        """
-        Очищення тексту: видалення HTML-тегів, зайвих пробілів, скриптів тощо.
-        """
         text = remove_tags(text)
         text = re.sub(r"\s+", " ", text)  # Усунення повторів пробілів
         text = re.sub(r"\|", " ", text)  # Видалення зайвих вертикальних рисок
