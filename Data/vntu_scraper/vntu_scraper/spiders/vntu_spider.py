@@ -70,7 +70,6 @@ class VntuSpider(scrapy.Spider):
 
     def filter_links(self, response, links):
 
-        # Абсолютні посилання
         links = [response.urljoin(link) for link in links]
 
         # Фільтрація посилань
