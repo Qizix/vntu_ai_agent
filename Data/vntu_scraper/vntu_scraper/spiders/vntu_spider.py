@@ -72,7 +72,7 @@ class VntuSpider(scrapy.Spider):
 
         links = [response.urljoin(link) for link in links]
 
-        # Фільтрація посилань
+
         filtered_links = [
             link for link in links
             if ("vntu.edu.ua" in link and
