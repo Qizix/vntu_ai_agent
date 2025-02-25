@@ -63,7 +63,7 @@ class VntuSpider(scrapy.Spider):
 
     def clean_text(self, text):
         text = remove_tags(text)
-        text = re.sub(r"\s+", " ", text)  # Усунення повторів пробілів
+        text = re.sub(r"\s+", " ", text)
         text = re.sub(r"\|", " ", text)  # Видалення зайвих вертикальних рисок
         text = re.sub(r"\b(подробиці|читати далі|деталі)\b", "", text, flags=re.I)  # Видалення зайвих фраз
         return text.strip()
