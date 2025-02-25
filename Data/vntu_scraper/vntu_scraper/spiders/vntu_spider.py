@@ -13,7 +13,7 @@ class VntuSpider(scrapy.Spider):
 
     # Список селекторів для пошуку основного тексту
     TEXT_SELECTORS = [
-        "div#content",  # Основний контент
+        "div#content",
         "div.content",  # Популярний клас
         "article",  # Тег для статей
         "section",  # Загальні секції
