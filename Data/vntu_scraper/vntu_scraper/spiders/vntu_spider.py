@@ -65,7 +65,7 @@ class VntuSpider(scrapy.Spider):
         text = remove_tags(text)
         text = re.sub(r"\s+", " ", text)
         text = re.sub(r"\|", " ", text)
-        text = re.sub(r"\b(подробиці|читати далі|деталі)\b", "", text, flags=re.I)  # Видалення зайвих фраз
+        text = re.sub(r"\b(подробиці|читати далі|деталі)\b", "", text, flags=re.I)
         return text.strip()
 
     def filter_links(self, response, links):
