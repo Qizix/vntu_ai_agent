@@ -54,7 +54,7 @@ class VntuSpider(scrapy.Spider):
             elements = response.css(f"{sel} *::text").getall()
             if elements:
                 text = self.clean_text(" ".join(elements))
-                if text:  # Повертаємо перший нерозривний результат
+                if text:
                     self.logger.info(f"Текст знайдено за селектором: {sel}")
                     return text
 
