@@ -37,7 +37,7 @@ class VntuSpider(scrapy.Spider):
         # Збереження результатів
         yield {
             "url": response.url,
-            "cleaned_main_text": raw_text,  # Основний текст сторінки
+            "cleaned_main_text": raw_text,
         }
 
         # Перехід до інших сторінок
