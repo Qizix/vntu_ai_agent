@@ -49,7 +49,7 @@ class VntuSpider(scrapy.Spider):
 
     def extract_clean_text(self, response, custom_selectors=None):
 
-        selectors = custom_selectors or self.TEXT_SELECTORS  # Використовується переданий або стандартний список селекторів
+        selectors = custom_selectors or self.TEXT_SELECTORS
         for sel in selectors:
             elements = response.css(f"{sel} *::text").getall()
             if elements:
