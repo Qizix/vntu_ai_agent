@@ -40,7 +40,7 @@ class VntuSpider(scrapy.Spider):
             "cleaned_main_text": raw_text,
         }
 
-        # Перехід до інших сторінок
+
         for link in all_links:
             if link not in self.visited_links:
                 self.visited_links.add(link)
