@@ -34,7 +34,6 @@ class VntuSpider(scrapy.Spider):
 
         self.logger.debug(f"На сторінці знайдено загалом {len(all_links)} посилань.")
 
-        # Збереження результатів
         yield {
             "url": response.url,
             "cleaned_main_text": raw_text,
