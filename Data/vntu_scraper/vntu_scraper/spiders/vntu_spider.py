@@ -28,7 +28,6 @@ class VntuSpider(scrapy.Spider):
         # Вибір тексту з використанням загальних селекторів
         raw_text = self.extract_clean_text(response)
 
-        # Отримання всіх посилань сторінки
         all_links = response.css("a::attr(href)").getall()
         all_links = self.filter_links(response, all_links)
 
