@@ -25,7 +25,6 @@ class VntuSpider(scrapy.Spider):
         self.counter += 1
         self.logger.info(f"[{self.counter}] Обробляється сторінка: {response.url}")
 
-        # Вибір тексту з використанням загальних селекторів
         raw_text = self.extract_clean_text(response)
 
         all_links = response.css("a::attr(href)").getall()
