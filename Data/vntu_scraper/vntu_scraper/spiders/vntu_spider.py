@@ -11,7 +11,6 @@ class VntuSpider(scrapy.Spider):
     visited_links = set()
     counter = 0
 
-    # Список селекторів для пошуку основного тексту
     TEXT_SELECTORS = [
         "div#content",
         "div.content",  # Популярний клас
