@@ -4,7 +4,6 @@ import requests
 # URL вашого агента
 AGENT_API_URL = "http://127.0.0.1:8000/agent"
 
-# Назва сторінки
 st.title("🤖 AI Chat Interface")
 
 # Додаткові стилі

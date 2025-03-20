@@ -8,7 +8,7 @@ import os
 from sentence_transformers import SentenceTransformer
 import faiss
 
-# *** Налаштування ***
+
 OLLAMA_API_URL = "http://127.0.0.1:11434/api/generate"  # Ендпоінт Ollama
 FAISS_INDEX_PATH = "Data/processed/big/vector_index.faiss"
 MODEL_PATH = "Data/processed/big/sentence_transformer_model"
