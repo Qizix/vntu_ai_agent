@@ -15,7 +15,7 @@ class VntuSpider(scrapy.Spider):
         "div#content",
         "div.content",
         "article",
-        "section",  # Загальні
+        "section",
         "main",  # Основна частина сторінки
     ]
 
