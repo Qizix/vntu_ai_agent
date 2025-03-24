@@ -4,7 +4,7 @@ import requests
 import streamlit as st
 import os
 
-# Підключення до зовнішнього FAISS-індексу та моделі SentenceTransforme
+# Підключення до зовнішнього FAISS-індексу та моделі SentenceTransform
 from sentence_transformers import SentenceTransformer
 import faiss
 
