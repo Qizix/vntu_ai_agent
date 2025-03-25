@@ -8,7 +8,7 @@ data = {
 
 response = requests.post(url, json=data)
 
-# Print the response from the agent
+# Print the response from the agen
 if response.status_code == 200:
     print("Response:", response.json())
 else:
