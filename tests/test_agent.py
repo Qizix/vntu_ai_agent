@@ -8,7 +8,7 @@ data = {
 
 response = requests.post(url, json=data)
 
-# Print the response from the age
+# Print the response from the ag
 if response.status_code == 200:
     print("Response:", response.json())
 else:
