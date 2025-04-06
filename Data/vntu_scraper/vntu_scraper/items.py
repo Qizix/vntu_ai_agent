@@ -1,12 +1,12 @@
-# Define here the models for your scraped items
+# Define here the models for you scraped items
 #
-# See documentation in:
+# See documentation 
 # https://docs.scrapy.org/en/latest/topics/items.html
 
 import scrapy
 
 
 class VntuScraperItem(scrapy.Item):
-    # define the fields for your item here like:
+    # define the fieldsfor your item here like:
     # name = scrapy.Field()
     pass
