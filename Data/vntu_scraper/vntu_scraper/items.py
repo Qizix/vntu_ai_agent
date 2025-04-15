@@ -1,7 +1,7 @@
 # Define here the models for you scraped items
 #
 # See documentation 
-# https://docs.scrapy.org/en/latest/topics/items.html
+# https://docs.scrapyorg/en/latest/topics/items.html
 
 import scrapy
 
