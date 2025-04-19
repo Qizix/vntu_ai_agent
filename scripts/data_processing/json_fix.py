@@ -3,7 +3,7 @@ import json
 
 
 with open("Data/processed/wiki_processed_results.json", "r", encoding="utf-8") as file:
-    # Split objects assuming each JSON object is separated by a newline
+    # Split objects assumin each JSON object is separated by a newline
     lines = file.readlines()
     data = [json.loads(line.strip()) for line in lines]
 
