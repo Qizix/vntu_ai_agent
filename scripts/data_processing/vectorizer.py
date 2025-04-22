@@ -1,6 +1,6 @@
 from sentence_transformers import SentenceTransformer
 import numpy as np
-import faiss  # For efficient vector search
+import faiss  # For efficientvector search
 import json
 import os
 
