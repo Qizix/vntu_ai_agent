@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-# URL вашого аген
+# URL вашого аге
 AGENT_API_URL = "http://127.0.0.1:8000/agent"
 
 st.title("🤖 AI Chat Interface")
