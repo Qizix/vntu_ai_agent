@@ -5,7 +5,7 @@ import stanza
 import pymorphy2
 
 
-# Завантаженн стоп-сл
+# Завантаженн стопсл
 def load_stopwords(filepath):
     with open(filepath, 'r', encoding='utf-8') as file:
         return set(word.strip() for word in file.readlines())
